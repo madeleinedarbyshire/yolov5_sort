@@ -12,11 +12,15 @@ sys.path.append(os.path.join(current_dir, '..', 'src'))
 from detect import detect, initialize_detector
 from sort import Sort
 
-def build(model, tracker, image_dir):
+CLASSES = []
+
+def build(model, tracker, image_dir, video_name):
     video_id = 1
-    video_name = image_dir.split('/')[-1]
+    if video_name == None:
+        video_name = image_dir.split('/')[-1]
+    categories = [{'id': i, 'name': c} for i, c in enumerate(CLASSES)]
     data = {'videos': {'id': video_id, 'name': video_name},
-            'categories': [{'id': 0, 'name': 'sugar_beet'}, {'id': 1, 'name': 'weed'}]}
+            'categories': categories}
 
     images = annotations = []
     image_id = annotation_id = 1
@@ -41,7 +45,6 @@ def build(model, tracker, image_dir):
         images.append(image_data)
         annotations.append(img_annotations)
         image_id += 1
-        break
     
     data['images'] = images
     data['annotations'] = annotations
@@ -57,6 +60,7 @@ if __name__ == '__main__':
     parser.add_argument('--img-size', type=int, default=640, help='inference size (pixels)')
     parser.add_argument('--conf-thres', type=float, default=0.25, help='object confidence threshold')
     parser.add_argument('--iou-thres', type=float, default=0.45, help='IOU threshold for NMS')
+    parser.add_argument('--video-name', type=str, help='Video name')
     parser.add_argument('--device', default='0', help='cuda device, i.e. 0 or 0,1,2,3 or cpu')
     parser.add_argument('--classes', nargs='+', type=str, help='List of integers')
     parser.add_argument('--agnostic-nms', action='store_true', help='class-agnostic NMS')
@@ -66,12 +70,15 @@ if __name__ == '__main__':
 
     args = parser.parse_args()
 
+    if args.classes:
+        CLASSES = args.classes
+
     with torch.no_grad():
         model = initialize_detector(args.weights, args.device, args.agnostic_nms, args.conf_thres, args.iou_thres)
         sort_tracker = Sort(max_age=args.sort_max_age,
                             min_hits=args.sort_min_hits,
                             iou_threshold=args.sort_iou_thresh)
-        dataset = build(model, sort_tracker, args.image_dir)
+        dataset = build(model, sort_tracker, args.image_dir, args.video_name)
 
         with open(args.out, "w") as f:
             json.dump(dataset, f)
