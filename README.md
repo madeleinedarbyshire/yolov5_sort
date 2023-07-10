@@ -16,9 +16,15 @@ pip install ultralytics --no-deps
 
 (You will need to install ultralytics with --no-deps here because otherwise it will install opencv-python but opencv is already included in the container.)
 
-## Produce Annotations
+## Produce COCO Annotations
 You can produce COCO-style bounding box annotations on a dataset of images. 
 
 ```
 python tools/build_dataset.py --image-dir my_dataset --out my_data.json --classes sugar_beet weed --agnostic-nms
+```
+
+## Produce CVAT Annotations
+You can produce CVAT tracker annotations.
+```
+python tools/build_dataset.py --image-dir my_dataset --out my_data.xml --classes sugar_beet weed --agnostic-nms --dataset-type cvat
 ```
